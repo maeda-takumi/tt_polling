@@ -31,6 +31,7 @@ def main() -> None:
             "--noconfirm",
             "--clean",
             "--hidden-import=selenium.webdriver.chrome.options",
+            "--hidden-import=selenium.webdriver.chrome.webdriver",
             f"--icon={ICON_ICO}",
             f"--add-data={add_data_arg}",
         ]

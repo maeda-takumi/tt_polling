@@ -12,8 +12,7 @@ def _normalize_event_date(value: str) -> str | None:
     value = value.strip()
     if not value:
         return None
-    # DB保存値は yyyy-mm-dd 想定。スプシ書込は yyyy/mm/dd 形式に変換する。
-    return value.replace("-", "/")
+    return value
 
 
 def sync_event_dates_to_sheet(
@@ -25,24 +24,19 @@ def sync_event_dates_to_sheet(
     scraped_on: date | None = None,
     logger: Callable[[str], None] | None = None,
 ) -> dict[str, int]:
-    """スクレイピング結果の customer_name ごとに実行日をスプシへ書き込む。"""
+    """スクレイピング結果の customer_name ごとに event_date をスプシへ書き込む。"""
 
     def log(message: str):
         if logger:
             logger(message)
 
-    synced_date = (
-        scraped_on.strftime("%Y/%m/%d")
-        if scraped_on is not None
-        else _normalize_event_date(str(date.today()))
-    )
     customers_to_dates: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         customer_name = (row.get("customer_name") or "").strip()
-        if not customer_name or not synced_date:
+        event_date = _normalize_event_date(str(row.get("event_date") or ""))
+        if not customer_name or not event_date:
             continue
-        customers_to_dates[customer_name].add(synced_date)
-
+        customers_to_dates[customer_name].add(event_date)
     summary = {
         "prepared": len(customers_to_dates),
         "updated": 0,

@@ -33,7 +33,8 @@ def sync_event_dates_to_sheet(
     customers_to_dates: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         customer_name = (row.get("customer_name") or "").strip()
-        event_date = _normalize_event_date(str(row.get("event_date") or ""))
+        event_date_raw = row.get("event_date") or row.get("date") or ""
+        event_date = _normalize_event_date(str(event_date_raw))
         if not customer_name or not event_date:
             continue
         customers_to_dates[customer_name].add(event_date)

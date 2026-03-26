@@ -1,4 +1,5 @@
 import re
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -24,6 +25,9 @@ SPREADSHEET_ID = "1mDccfeN9sR8OJdWLv6wPN0DzRr5Y5OfLSmrjjHOvMIs"
 SPREADSHEET_SHEET_NAME = "ChatGPT"
 CREDENTIALS_PATH = Path(__file__).resolve().with_name("credentials.json")
 
+def resource_path(relative_path: str) -> Path:
+    base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base_dir / relative_path
 
 class App:
     def __init__(self, root: tk.Tk):
@@ -31,6 +35,8 @@ class App:
         self.root.title("TimeTree Polling Scraper")
         self.root.geometry("900x660")
         self.root.configure(bg=BG)
+        self._icon_image = None
+        self._set_window_icon()
 
         self.status = tk.StringVar(value="待機中")
         self.poll_time = tk.StringVar(value="09:00")
@@ -44,6 +50,22 @@ class App:
         self._setup_style()
         self._build()
 
+    def _set_window_icon(self):
+        ico_path = resource_path("img/icon.ico")
+        png_path = resource_path("img/icon.png")
+
+        if ico_path.exists():
+            try:
+                self.root.iconbitmap(default=str(ico_path))
+            except Exception:
+                pass
+
+        if png_path.exists():
+            try:
+                self._icon_image = tk.PhotoImage(file=str(png_path))
+                self.root.iconphoto(True, self._icon_image)
+            except Exception:
+                pass
     def _setup_style(self):
         style = ttk.Style()
         style.theme_use("clam")

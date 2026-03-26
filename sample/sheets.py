@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -21,21 +22,26 @@ def sync_event_dates_to_sheet(
     sheet_name: str,
     credentials_path: str | Path,
     rows: Iterable[dict],
+    scraped_on: date | None = None,
     logger: Callable[[str], None] | None = None,
 ) -> dict[str, int]:
-    """DB/スクレイピング結果の customer_name と event_date を使ってスプシへ書き込む。"""
+    """スクレイピング結果の customer_name ごとに実行日をスプシへ書き込む。"""
 
     def log(message: str):
         if logger:
             logger(message)
 
+    synced_date = (
+        scraped_on.strftime("%Y/%m/%d")
+        if scraped_on is not None
+        else _normalize_event_date(str(date.today()))
+    )
     customers_to_dates: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         customer_name = (row.get("customer_name") or "").strip()
-        event_date = _normalize_event_date(str(row.get("event_date") or row.get("date") or ""))
-        if not customer_name or not event_date:
+        if not customer_name or not synced_date:
             continue
-        customers_to_dates[customer_name].add(event_date)
+        customers_to_dates[customer_name].add(synced_date)
 
     summary = {
         "prepared": len(customers_to_dates),
@@ -113,7 +119,7 @@ def sync_event_dates_to_sheet(
         date_value = next(iter(date_values))
         updates.append(
             {
-                "range": f"{sheet_name}!AG{row_number}",
+                "range": f"{sheet_name}!AH{row_number}",
                 "values": [[date_value]],
             }
         )

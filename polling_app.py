@@ -189,6 +189,7 @@ class App:
                 sheet_name=SPREADSHEET_SHEET_NAME,
                 credentials_path=CREDENTIALS_PATH,
                 rows=events,
+                scraped_on=executed_at.date(),
                 logger=sheets_log,
             )
 

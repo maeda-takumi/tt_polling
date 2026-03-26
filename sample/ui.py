@@ -26,7 +26,6 @@ class App:
         self.root.configure(bg=BG)
 
         self.status = tk.StringVar(value="待機中")
-        self.start_date = tk.StringVar(value=datetime.now().strftime("%Y-%m-%d"))
         self.keyword = tk.StringVar(value="")
         self.db_path = tk.StringVar(value=str(DB_PATH))
         self.csv_path = tk.StringVar(value="events_export.csv")
@@ -53,18 +52,18 @@ class App:
         wrap.pack(fill="both", expand=True)
 
         ttk.Label(wrap, text="TimeTree Scraper", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(wrap, text="全カレンダー対象 / 指定日から31日 / SQLite + CSV", style="Sub.TLabel").pack(anchor="w", pady=(4, 18))
+        ttk.Label(wrap, text="全カレンダー対象 / 実行時点の前日1日分 / SQLite + CSV", style="Sub.TLabel").pack(anchor="w", pady=(4, 18))
 
         card = ttk.Frame(wrap, style="Card.TFrame", padding=20)
         card.pack(fill="x")
 
-        self._field(card, 0, "開始日 (YYYY-MM-DD)", self.start_date)
-        self._field(card, 1, "キーワード（任意）", self.keyword)
-        self._field(card, 2, "DBファイル", self.db_path)
-        self._field(card, 3, "CSV出力ファイル", self.csv_path)
+        self._field(card, 0, "キーワード（任意）", self.keyword)
+        self._field(card, 1, "DBファイル", self.db_path)
+        self._field(card, 2, "CSV出力ファイル", self.csv_path)
+
 
         buttons = ttk.Frame(card, style="Card.TFrame")
-        buttons.grid(row=4, column=0, columnspan=2, sticky="w", pady=(12, 0))
+        buttons.grid(row=3, column=0, columnspan=2, sticky="w", pady=(12, 0))
 
         self.scrape_btn = ttk.Button(buttons, text="スクレイピング実行", style="Accent.TButton", command=self.start_scrape)
         self.scrape_btn.grid(row=0, column=0, padx=(0, 8))
@@ -99,7 +98,6 @@ class App:
 
     def _run_scrape(self):
         try:
-            start_date = datetime.strptime(self.start_date.get().strip(), "%Y-%m-%d").date()
             keyword = self.keyword.get().strip()
             db_path = self.db_path.get().strip() or str(DB_PATH)
 
@@ -108,7 +106,7 @@ class App:
             try:
                 login(driver, WebDriverWait(driver, 20))
                 self.root.after(0, self.status.set, "取得中...")
-                events = scrape_events(driver, start_date=start_date, keyword=keyword)
+                events = scrape_events(driver, start_date=None, keyword=keyword)
             finally:
                 driver.quit()
 
@@ -127,8 +125,7 @@ class App:
 
     def export_csv(self):
         try:
-            start = datetime.strptime(self.start_date.get().strip(), "%Y-%m-%d").date()
-            end = start + timedelta(days=30)
+            target_date = datetime.now().date() - timedelta(days=1)
             db_path = self.db_path.get().strip() or str(DB_PATH)
             csv_path = self.csv_path.get().strip() or "events_export.csv"
 
@@ -137,8 +134,8 @@ class App:
                 count = export_events_to_csv(
                     conn=conn,
                     output_path=csv_path,
-                    start_date=start.isoformat(),
-                    end_date=end.isoformat(),
+                    start_date=target_date.isoformat(),
+                    end_date=target_date.isoformat(),
                     keyword=self.keyword.get().strip(),
                 )
 

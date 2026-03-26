@@ -97,8 +97,9 @@ def nudge_scroll(driver):
     driver.execute_script("window.scrollTo(0, 0);")
 
 
-def generate_target_dates(start_date: date, days: int = 31) -> list[date]:
-    return [start_date + timedelta(days=i) for i in range(days)]
+def generate_target_dates(_: date | None = None) -> list[date]:
+    # 仕様変更: 実行日の前日分のみ取得
+    return [date.today() - timedelta(days=1)]
 
 
 def passes_keyword_filter(info: dict, keyword: str) -> bool:

@@ -1,5 +1,4 @@
 import argparse
-from datetime import datetime
 
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -10,8 +9,7 @@ from storage import DB_PATH, get_connection, init_db, save_events
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="TimeTree scraping (31 days)")
-    parser.add_argument("--start-date", required=True, help="YYYY-MM-DD")
+    parser = argparse.ArgumentParser(description="TimeTree scraping (yesterday only)")
     parser.add_argument("--keyword", default="", help="Filter by keyword")
     parser.add_argument("--db-path", default=str(DB_PATH), help="SQLite db path")
     return parser.parse_args()
@@ -19,12 +17,11 @@ def parse_args():
 
 def main():
     args = parse_args()
-    start_date = datetime.strptime(args.start_date, "%Y-%m-%d").date()
 
     driver = create_driver()
     try:
         login(driver, WebDriverWait(driver, 20))
-        events = scrape_events(driver, start_date=start_date, keyword=args.keyword)
+        events = scrape_events(driver, start_date=None, keyword=args.keyword)
     finally:
         driver.quit()
 

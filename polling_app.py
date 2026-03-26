@@ -1,6 +1,7 @@
 import re
 import threading
 import tkinter as tk
+from pathlib import Path
 from datetime import datetime, timedelta
 from tkinter import filedialog, messagebox, ttk
 
@@ -9,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from sample.auth import login
 from sample.browser import create_driver
 from sample.scraper import scrape_events
+from sample.sheets import sync_event_dates_to_sheet
 from sample.storage import DB_PATH, export_events_to_csv, get_connection, init_db, save_events
 
 GREEN = "#22c55e"
@@ -17,6 +19,10 @@ BG = "#f8fafc"
 CARD = "#ffffff"
 TEXT = "#0f172a"
 MUTED = "#64748b"
+
+SPREADSHEET_ID = "1mDccfeN9sR8OJdWLv6wPN0DzRr5Y5OfLSmrjjHOvMIs"
+SPREADSHEET_SHEET_NAME = "ChatGPT"
+CREDENTIALS_PATH = Path(__file__).resolve().with_name("credentials.json")
 
 
 class App:
@@ -174,8 +180,23 @@ class App:
                 init_db(conn)
                 count = save_events(conn, events)
 
-            self.root.after(0, self.status.set, f"完了: {count}件保存")
             self.root.after(0, self._append_log, f"DB保存完了 {db_path} ({count}件)")
+            def sheets_log(message: str):
+                self.root.after(0, self._append_log, message)
+
+            sync_summary = sync_event_dates_to_sheet(
+                spreadsheet_id=SPREADSHEET_ID,
+                sheet_name=SPREADSHEET_SHEET_NAME,
+                credentials_path=CREDENTIALS_PATH,
+                rows=events,
+                logger=sheets_log,
+            )
+
+            self.root.after(
+                0,
+                self.status.set,
+                f"完了: {count}件保存 / スプシ更新{sync_summary['updated']}件",
+            )
         except Exception as exc:
             self.root.after(0, self.status.set, "エラー")
             self.root.after(0, self._append_log, f"エラー: {exc}")

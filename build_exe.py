@@ -30,6 +30,7 @@ def main() -> None:
             "--windowed",  # no console window
             "--noconfirm",
             "--clean",
+            "--hidden-import=selenium.webdriver.chrome.options",
             f"--icon={ICON_ICO}",
             f"--add-data={add_data_arg}",
         ]

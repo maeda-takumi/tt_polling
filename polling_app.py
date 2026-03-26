@@ -23,7 +23,15 @@ MUTED = "#64748b"
 
 SPREADSHEET_ID = "1mDccfeN9sR8OJdWLv6wPN0DzRr5Y5OfLSmrjjHOvMIs"
 SPREADSHEET_SHEET_NAME = "ChatGPT"
-CREDENTIALS_PATH = Path(__file__).resolve().with_name("credentials.json")
+
+def get_credentials_path() -> Path:
+    """credentials.json の参照先を実行形態に応じて解決する。"""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent / "credentials.json"
+    return Path(__file__).resolve().with_name("credentials.json")
+
+
+CREDENTIALS_PATH = get_credentials_path()
 
 def resource_path(relative_path: str) -> Path:
     base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))

@@ -1,3 +1,5 @@
 *.ダウンロード
 *.ダウンロード.*
 credentials.json
+build/
+dist/   

@@ -43,6 +43,37 @@ def get_event_count(driver, date_str: str, max_retry: int = 3) -> int:
     return 0
 
 
+def wait_for_event_count_settled(
+    driver,
+    date_str: str,
+    timeout: float = 8.0,
+    poll_interval: float = 0.25,
+    stable_rounds: int = 3,
+) -> int:
+    """
+    日次画面のイベント一覧描画が落ち着くまで待機して件数を返す。
+
+    画面遷移直後は `ul[data-date=...]` が存在しても中身の div が未描画のことがあるため、
+    件数が連続して同一値になるまで短時間ポーリングする。
+    """
+    deadline = time.time() + timeout
+    last_count = -1
+    stable_hits = 0
+
+    while time.time() < deadline:
+        count = get_event_count(driver, date_str, max_retry=1)
+        if count == last_count:
+            stable_hits += 1
+        else:
+            stable_hits = 0
+            last_count = count
+
+        if stable_hits >= stable_rounds:
+            return count
+        time.sleep(poll_interval)
+
+    return max(last_count, 0)
+
 def parse_title(title: str):
     actor = customer = sales = None
     match = re.match(r"^(.*?)[\(\（](.*?)[\)\）](.*)$", title)
@@ -123,7 +154,8 @@ def scrape_events(driver, start_date: date, keyword: str = "") -> list[dict]:
             driver.get(f"https://timetreeapp.com/calendars/{calendar_id}/daily/{date_str}")
             nudge_scroll(driver)
 
-            for i in range(get_event_count(driver, date_str)):
+            event_count = wait_for_event_count_settled(driver, date_str)
+            for i in range(event_count):
                 info = extract_event_by_index(driver, date_str, i)
                 if not info or not passes_keyword_filter(info, keyword):
                     continue
